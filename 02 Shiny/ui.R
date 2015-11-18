@@ -1,5 +1,4 @@
 #ui.R 
-
 library(shiny)
 
 # Define UI for application that plots random distributions 
@@ -11,7 +10,7 @@ shinyUI(pageWithSidebar(
   # Sidebar with a slider input for number of observations
   sidebarPanel(
     #PV2 Crosstab inputs
-    h3("Crosstab sliders: 2 Door vehicle Passenger Volume"),
+    h3("Crosstab sliders: 4 Door vehicle Passenger Volume"),
     #Slider for PV2 KPI1
     sliderInput("KPI1", 
                 "KPI Low Max value:", 
@@ -24,6 +23,7 @@ shinyUI(pageWithSidebar(
                 min = 1,
                 max = 2, 
                 value = 2),
+    actionButton("PV2Plot", "Generate PV4 Crosstab Plot"),
     #PV4 Crosstab inputs
     
     #Bar Chart inputs
@@ -36,6 +36,7 @@ shinyUI(pageWithSidebar(
     
     #action button to generate plots
     p("Click the button to Generate the plots."),
+    actionButton("BarPlot", "Generate Bar Plot"),
     actionButton("redoPlot", "Generate Plot")
     ),
   

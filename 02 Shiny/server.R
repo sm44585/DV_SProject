@@ -7,12 +7,12 @@ require(shiny)
 
 shinyServer(function(input, output) {
   #Code to generate data frame
-  vehicles <- eventReactive(input$redoPlot, {
+  vehicles <- eventReactive(c(input$redoPlot), {
     vehicles <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select ATVTYPE,BARRELS08,BARRELSA08,CITY08,CITYA08,CO2TAILPIPEAGPM,CO2TAILPIPEGPM,COMB08,COMBA08,CYLINDERS,FUELCOST08,FUELCOSTA08,FUELTYPE,FUELTYPE1,FUELTYPE2,HIGHWAY08,HIGHWAYA08,HLV,HPV,LV2,LV4,MPGDATA,PV2,PV4,YEAR,MAKE,TRANY from VEHICLES"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_sm44585', PASS='orcl_sm44585', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
   }, ignoreNULL = FALSE)
   
   #Code that generates reactive transmission filter for the bar chart.
-  trans_filter <- eventReactive(input$redoPlot, {
+  trans_filter <- eventReactive(input$BarPlot, {
     if (input$TRANY == "All"){
       trans_filter = c("Automatic 3-spd", "Automatic 4-spd","Automatic 5-spd","Automatic 6-spd","Automatic 6spd","Automatic 7-spd", "Automatic 8-spd", "Automatic 9-spd", "Manual 3-spd", "Manual 4-spd", "Manual 5-spd", "Manual 5 spd", "Manual 6-spd", "Manual 7-spd")
     }
@@ -22,8 +22,8 @@ shinyServer(function(input, output) {
     }, ignoreNULL = FALSE)
   
   #Code that generates reactive KPI inputs for both crosstabs
-  MPG_PV2_KPI_LOW <- eventReactive(input$redoPlot, {MPG_PV2_KPI_LOW = input$KPI1}, ignoreNULL = FALSE)   
-  MPG_PV2_KPI_HIGH <- eventReactive(input$redoPlot, {MPG_PV2_KPI_HIGH = input$KPI2}, ignoreNULL = FALSE)
+  MPG_PV2_KPI_LOW <- eventReactive(c(input$redoPlot, input$PV2Plot), {MPG_PV2_KPI_LOW = input$KPI1}, ignoreNULL = FALSE)   
+  MPG_PV2_KPI_HIGH <- eventReactive(c(input$redoPlot, input$PV2Plot), {MPG_PV2_KPI_HIGH = input$KPI2}, ignoreNULL = FALSE)
   
   #Code to generate PV2 Crosstab plot
   output$crosstabPV2Plot <- renderPlot({
