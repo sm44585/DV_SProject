@@ -3,6 +3,7 @@ require(jsonlite)
 require(RCurl)
 require(ggplot2)
 require(dplyr)
+require(reshape2)
 require(shiny)
 
 shinyServer(function(input, output) {
