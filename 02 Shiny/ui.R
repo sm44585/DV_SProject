@@ -9,22 +9,38 @@ shinyUI(pageWithSidebar(
   
   # Sidebar with a slider input for number of observations
   sidebarPanel(
-    #PV2 Crosstab inputs
+    #PV4 Crosstab inputs
     h3("Crosstab sliders: 4 Door vehicle Passenger Volume"),
-    #Slider for PV2 KPI1
+    #Slider for PV4 KPI1
     sliderInput("KPI1", 
                 "KPI Low Max value:", 
                 min = 0,
                 max = 1, 
                 value = 1),
-    #Slider for PV2 KPI2
+    #Slider for PV4 KPI2
     sliderInput("KPI2", 
                 "KPI Medium Max value:", 
                 min = 1,
                 max = 2, 
                 value = 2),
-    actionButton("PV2Plot", "Generate PV4 Crosstab Plot"),
-    #PV4 Crosstab inputs
+    actionButton("PV4Plot", "Generate PV4 Crosstab Plot"),
+    
+    #PV2 Crosstab inputs
+    h3("Crosstab sliders: 2 Door vehicle Passenger Volume"),
+    #Slider for PV2 KPI1
+    sliderInput("KPI1_2", 
+                "KPI Low Max value_2:", 
+                min = 0,
+                max = 1, 
+                value = 1),
+    #Slider for PV2 KPI2
+    sliderInput("KPI2_2", 
+                "KPI Medium Max value_2:", 
+                min = 1,
+                max = 2, 
+                value = 2),
+    actionButton("PV2Plot", "Generate PV2 Crosstab Plot"),
+    
     
     #Bar Chart inputs
     h3("Bar Chart filter: City and Highway MPG for each transmission"),
@@ -37,12 +53,24 @@ shinyUI(pageWithSidebar(
     #action button to generate plots
     p("Click the button to Generate the plots."),
     actionButton("BarPlot", "Generate Bar Plot"),
+    
+    #Scatter plot inputs
+    h3("Scatter plot selector: City and Highway MPG for each model year"),
+    #data range selector for each year
+    dateRangeInput("YEAR", "Year Range", start = "2010-12-30", end = "2011-12-30", min = "1985-12-30", max = "2016-12-30", startview = "year"),
+    
+    #action button to generate plots
+    p("Click the button to Generate the plots."),
+    actionButton("ScatterPlot", "Scatter Plot"),
     actionButton("redoPlot", "Generate Plot")
     ),
   
   # Show a plot of the generated distribution
   mainPanel(
+    plotOutput("crosstabPV4Plot"),
     plotOutput("crosstabPV2Plot"),
-    plotOutput("barchartPlot")
+    plotOutput("barchartPlot"),
+    plotOutput("ScatterPlot")
+    
   )
 ))
