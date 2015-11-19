@@ -23,9 +23,9 @@ shinyServer(function(input, output) {
     }, ignoreNULL = FALSE)
   
   #Code that generate reactive year selector for the scatter plot.
-  year_selector <- eventReactive(input$ScatterPlot, {
-    if 
-  }
+  #year_selector <- eventReactive(input$ScatterPlot, {
+   # if 
+  #}
   
   #Code that generates reactive KPI inputs for the PV4 crosstab
   MPG_PV2_KPI_LOW <- eventReactive(c(input$redoPlot,  input$PV4Plot), {MPG_PV2_KPI_LOW = input$KPI1}, ignoreNULL = FALSE)   
@@ -37,7 +37,7 @@ shinyServer(function(input, output) {
   
   #Code to generate PV4 Crosstab plot
   output$crosstabPV4Plot <- renderPlot({
-    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2),sum_pv4 = sum(PV4)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf, ratio_2 != Inf)
+    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08),sum_pv4 = sum(PV4))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter( ratio_2 != Inf)
     
     # This line turns the make and year columns into ordered factors.
     crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
@@ -71,7 +71,7 @@ plot <-ggplot() +
   
   #Code to generate PV2 Crosstab plot
   output$crosstabPV2Plot <- renderPlot({
-    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2),sum_pv4 = sum(PV4)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf, ratio_2 != Inf)
+    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV2_KPI_LOW_2(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV2_KPI_HIGH_2(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf)
     
     # This line turns the make and year columns into ordered factors.
     crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
