@@ -8,12 +8,12 @@ require(shiny)
 
 shinyServer(function(input, output) {
   #Code to generate data frame
-  vehicles <- eventReactive(c(input$redoPlot), {
+  vehicles <- eventReactive(c(input$refreshData), {
     vehicles <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select ATVTYPE,BARRELS08,BARRELSA08,CITY08,CITYA08,CO2TAILPIPEAGPM,CO2TAILPIPEGPM,COMB08,COMBA08,CYLINDERS,FUELCOST08,FUELCOSTA08,FUELTYPE,FUELTYPE1,FUELTYPE2,HIGHWAY08,HIGHWAYA08,HLV,HPV,LV2,LV4,MPGDATA,PV2,PV4,YEAR,MAKE,TRANY from VEHICLES"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_sm44585', PASS='orcl_sm44585', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
   }, ignoreNULL = FALSE)
   
   #Code that generates reactive transmission filter for the bar chart.
-  trans_filter <- eventReactive(input$BarPlot, {
+  trans_filter <- eventReactive(c(input$refreshAll, input$BarPlot), {
     if (input$TRANY == "All"){
       trans_filter = c("Automatic 3-spd", "Automatic 4-spd","Automatic 5-spd","Automatic 6-spd","Automatic 6spd","Automatic 7-spd", "Automatic 8-spd", "Automatic 9-spd", "Manual 3-spd", "Manual 4-spd", "Manual 5-spd", "Manual 5 spd", "Manual 6-spd", "Manual 7-spd")
     }
@@ -23,55 +23,26 @@ shinyServer(function(input, output) {
     }, ignoreNULL = FALSE)
   
   #Code that generate reactive year selector for the scatter plot.
-  #year_selector <- eventReactive(input$ScatterPlot, {
-   # if 
-  #}
-  
-  #Code that generates reactive KPI inputs for the PV4 crosstab
-  MPG_PV2_KPI_LOW <- eventReactive(c(input$redoPlot,  input$PV4Plot), {MPG_PV2_KPI_LOW = input$KPI1}, ignoreNULL = FALSE)   
-  MPG_PV2_KPI_HIGH <- eventReactive(c(input$redoPlot, input$PV4Plot), {MPG_PV2_KPI_HIGH = input$KPI2}, ignoreNULL = FALSE)
+  year_range <- eventReactive(c(input$refreshAll, input$ScatterPlot), {
+    if (input$BEG_YEAR <= input$END_YEAR){
+      year_range = input$BEG_YEAR:input$END_YEAR
+    }
+    else {
+      year_range = 1985:2016
+    }
+  }, ignoreNULL = FALSE)
   
   #Code that generates reactive KPI inputs for the PV2 crosstab
-  MPG_PV2_KPI_LOW_2 <- eventReactive(c(input$redoPlot, input$PV2Plot), {MPG_PV2_KPI_LOW_2 = input$KPI1_2}, ignoreNULL = FALSE)   
-  MPG_PV2_KPI_HIGH_2 <- eventReactive(c(input$redoPlot, input$PV2Plot), {MPG_PV2_KPI_HIGH_2 = input$KPI2_2}, ignoreNULL = FALSE)
+  MPG_PV2_KPI_LOW <- eventReactive(c(input$refreshAll, input$PV2Plot), {MPG_PV2_KPI_LOW_2 = input$PV2_KPILow}, ignoreNULL = FALSE)   
+  MPG_PV2_KPI_HIGH <- eventReactive(c(input$refreshAll, input$PV2Plot), {MPG_PV2_KPI_HIGH_2 = input$PV2_KPIHigh}, ignoreNULL = FALSE)
   
-  #Code to generate PV4 Crosstab plot
-  output$crosstabPV4Plot <- renderPlot({
-    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08),sum_pv4 = sum(PV4))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter( ratio_2 != Inf)
-    
-    # This line turns the make and year columns into ordered factors.
-    crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
-    
-    #This generates the PV4 with combined MPG plot
-plot <-ggplot() +
-      coord_cartesian() + 
-      scale_x_discrete() +
-      scale_y_discrete() +
-      labs(title='Vehicle Crosstab of Efficiency/Space ratio for 4 door cars') +
-      labs(x=paste("Make"), y=paste("Year")) +
-      layer(data=crosstab, 
-            mapping=aes(x=MAKE, y=YEAR, label=round(ratio_2, 2)), 
-            stat="identity", 
-            stat_params=list(), 
-            geom="text",
-            geom_params=list(colour="black"), 
-            position=position_identity()
-      ) +
-      layer(data=crosstab, 
-            mapping=aes(x=MAKE, y=YEAR, fill=kpi_2), 
-            stat="identity", 
-            stat_params=list(), 
-            geom="tile",
-            geom_params=list(alpha=0.50), 
-            position=position_identity()
-      ) 
-    # End your code here.
-    return(plot)
-  })
+  #Code that generates reactive KPI inputs for the PV4 crosstab
+  MPG_PV4_KPI_LOW <- eventReactive(c(input$refreshAll,  input$PV4Plot), {MPG_PV2_KPI_LOW = input$PV4_KPILow }, ignoreNULL = FALSE)   
+  MPG_PV4_KPI_HIGH <- eventReactive(c(input$refreshAll, input$PV4Plot), {MPG_PV2_KPI_HIGH = input$PV4_KPIHigh }, ignoreNULL = FALSE)
   
   #Code to generate PV2 Crosstab plot
   output$crosstabPV2Plot <- renderPlot({
-    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV2_KPI_LOW_2(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV2_KPI_HIGH_2(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf)
+    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2),sum_pv4 = sum(PV4)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf, ratio_2 != Inf)
     
     # This line turns the make and year columns into ordered factors.
     crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
@@ -93,6 +64,40 @@ plot <-ggplot() +
       ) +
       layer(data=crosstab, 
             mapping=aes(x=MAKE, y=YEAR, fill=kpi_1), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="tile",
+            geom_params=list(alpha=0.50), 
+            position=position_identity()
+      ) 
+    # End your code here.
+    return(plot)
+  })
+  
+  #Code to generate PV4 Crosstab plot
+  output$crosstabPV4Plot <- renderPlot({
+    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2),sum_pv4 = sum(PV4)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV4_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV4_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV4_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV4_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf, ratio_2 != Inf)
+    
+    # This line turns the make and year columns into ordered factors.
+    crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
+    
+    #This generates the PV4 with combined MPG plot
+    plot <-ggplot() +
+      coord_cartesian() + 
+      scale_x_discrete() +
+      scale_y_discrete() +
+      labs(title='Vehicle Crosstab of Efficiency/Space ratio for 4 door cars') +
+      labs(x=paste("Make"), y=paste("Year")) +
+      layer(data=crosstab, 
+            mapping=aes(x=MAKE, y=YEAR, label=round(ratio_2, 2)), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="text",
+            geom_params=list(colour="black"), 
+            position=position_identity()
+      ) +
+      layer(data=crosstab, 
+            mapping=aes(x=MAKE, y=YEAR, fill=kpi_2), 
             stat="identity", 
             stat_params=list(), 
             geom="tile",
@@ -145,9 +150,10 @@ plot <-ggplot() +
       )
     return(plot)
   })
+  
   #Code to generate the scatter plot
   output$ScatterPlot <- renderPlot({
-    scatterplot <- vehicles() %>% select(COMB08, YEAR) %>% transform(YEAR = as.Date(as.character(YEAR), "%Y"))
+    scatterplot <- vehicles() %>% select(COMB08, YEAR) %>% subset(YEAR %in% year_range()) %>% transform(YEAR = as.Date(as.character(YEAR), "%Y"))
     plot <- ggplot() +
       coord_cartesian() + 
       scale_x_date() +
