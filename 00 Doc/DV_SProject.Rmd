@@ -4,19 +4,95 @@ author: "Spencer Muncey and Chenchao Zang"
 date: "November 16, 2015"
 output: html_document
 ---
+# Shiny App that explores U.S MPG data to allow interactive data analysis
+For this project, we looked at the Environmental Protection Agency's [fuel economy data](https://www.fueleconomy.gov/feg/download.shtml) for every vehicle tested at the National Vehicle and Fuel Emissions Laboratory in Ann Arbor, Michigan since 1984. This dataset has data on almost 37,000 different vehicles, and includes many attributes to analyze. The shiny app resides [here](https://smuncey.shinyapps.io/Project6) on a shiny server that anybody can access. 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
+###Summary of vehicles dataset and first ten rows
 ```{r}
-summary(cars)
+require("jsonlite")
+require("RCurl")
+
+# Loads the data from Fast Food table into Fast Food dataframe
+# Change the USER and PASS below to be your UTEid
+vehicles <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select ATVTYPE,BARRELS08,BARRELSA08,CITY08,CITYA08,CO2TAILPIPEAGPM,CO2TAILPIPEGPM,COMB08,COMBA08,CYLINDERS,FUELCOST08,FUELCOSTA08,FUELTYPE,FUELTYPE1,FUELTYPE2,HIGHWAY08,HIGHWAYA08,HLV,HPV,LV2,LV4,MPGDATA,PV2,PV4,YEAR,MAKE,TRANY from VEHICLES"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_sm44585', PASS='orcl_sm44585', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
+
+summary(vehicles)
+
 ```
 
-You can also embed plots, for example:
+### A detailed explanation of each column that we used in the vehicles dataset:  
 
-```{r, echo=FALSE}
-plot(cars)
+* ATVTYPE - type of alternative fuel or advanced technology vehicle
+* BARRELS08 - annual petroleum consumption in barrels for fuelType1
+* BARRELSA08 - annual petroleum consumption in barrels for fuelType2
+* CITY08 - city MPG for fuelType1
+* CITYA08 - city MPG for fuelType2
+* CO2TAILPIPEGPM - tailpipe CO2 in grams/mile for fuelType1 
+* CO2TAILPIPEAGPM - tailpipe CO2 in grams/mile for fuelType2
+* COMB08 - combined MPG for fuelType1
+* COMBA08 - combined MPG for fuelType2
+* CYLINDERS - engine cylinders 
+* FUELCOST08 - annual fuel cost for fuelType1 ($) 
+* FUELCOSTA08 - annual fuel cost for fuelType2 ($)
+* FUELTYPE - fuel type with fuelType1 and fuelType2 (if applicable)
+* FUELTYPE1 - fuel type 1. For single fuel vehicles, this will be the only fuel. For dual fuel vehicles, this will be the conventional fuel
+* FUELTYPE2 - fuel type 2. For dual fuel vehicles, this will be the alternative fuel (e.g. E85, Electricity, CNG, LPG). For single fuel vehicles, this field is not used
+* HIGHWAY08 - highway MPG for fuelType1 
+* HIGHWAYA08 - highway MPG for fuelType2
+* HLV - hatchback luggage volume (cubic feet)
+* HPV - hatchback passenger volume (cubic feet)
+* LV2 - 2 door luggage volume (cubic feet)
+* LV4 - 4 door luggage volume (cubic feet)
+* MPGDATA - has My MPG data
+* PV2 - 2-door passenger volume (cubic feet)
+* PV4 - 4-door passenger volume (cubic feet)
+* TRANY - transmission
+* YEAR - model year
+
+##Structure of Shiny App
+The Shiny app is constructed from a server r script and a ui r script. The UI is a dashboard with four tabs:
+
+* Tab 1 - PV2 Crosstab - PV2 means 2-door passenger volume (cubic feet)
+* Tab 2 - PV4 Crosstab - PV4 means 4-door passenger volume (cubic feet)
+* Tab 3 - Transmission Bar Chart
+* Tab 4 - MPG for 1985-2016 model year Scatterplot
+* Tab 5 - Refresh Data from Oracle and All Plots
+
+###Server script
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```
+####Description of Server script
+This script generates all of the output and handles the inputs for our shiny app. The architecture is as follows: data is gathered once from Oracle when the app is loaded and all user input only changes the local copy of the data frame. In other words, the data is stored in the local R session, which allows for a more fluid and responsive application for the user. 
+
+#####PV2 Crosstab
+This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV2 Plot" after changing the two PV2 KPI slider inputs.
+
+#####PV4 Crosstab
+dummy text
+
+#####Bar Chart
+This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate Bar Chart" after clicking on the various transmissions that the user wants to look at. 
+
+#####Scatterplot
+dummy text
+
+###Ui script
+```
+
+```
+####Description of UI script
+This script handles all of the rendering and the user interface for the application. The architecture is a dashboard with 4 tabs. The first tab contains a crosstab that looks at 2 door passenger cars and with two slider inputs for the user to determine what threshold he/she may want to set for the KPI's. The second tab contains another crosstab simliar to the first tab but looks at 4 door passenger cars. The third tab has a Bar Chart with 14 checkboxes that correspond to the 14 different types of transmissions.  The final tab is a scatterplot that looks at the combined MPG for all vehicles in a given model year and has two inputs: one allows the user to select the beginning model year for visualizing and the other selects the end year.
+
+#####PV2 Crosstab
+This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input. 
+
+#####PV4 Crosstab
+dummy text
+
+#####Bar Chart
+This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The UI script is wrapped in a tabItem function as the third tab and includes a grouped checkbox input of 14 checkboxes, each with a unique type of transmission for the user to select.
+
+#####Scatterplot
+dummy text
