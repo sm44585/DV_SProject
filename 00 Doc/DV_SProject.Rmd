@@ -1,11 +1,11 @@
 ---
 title: "Project 6 (Shiny Application)"
 author: "Spencer Muncey and Chenchao Zang"
-date: "November 16, 2015"
+date: "November 23, 2015"
 output: html_document
 ---
 # Shiny App that explores U.S MPG data to allow interactive data analysis
-For this project, we looked at the Environmental Protection Agency's [fuel economy data](https://www.fueleconomy.gov/feg/download.shtml) for every vehicle tested at the National Vehicle and Fuel Emissions Laboratory in Ann Arbor, Michigan since 1984. This dataset has data on almost 37,000 different vehicles, and includes many attributes to analyze. The shiny app resides [here](https://smuncey.shinyapps.io/Project6) on a shiny server that anybody can access. 
+For this project, we looked at the Environmental Protection Agency's [fuel economy data](https://www.fueleconomy.gov/feg/download.shtml) for every vehicle tested at the National Vehicle and Fuel Emissions Laboratory in Ann Arbor, Michigan since 1984. This dataset has data on almost 37,000 different vehicles, and includes many attributes to analyze. The shiny app resides [here](https://smuncey.shinyapps.io/Project6) on a shiny server that anybody can access. It may take up to a minute for the plots to load up, and you may have to move the mouse over the plot area to get the plots to appear. Also, if it says "Empty Reply from the server", just refresh the webpage. The server storing the database that has the data is not that robust.
 
 ###Summary of vehicles dataset and first ten rows
 ```{r}
@@ -237,16 +237,16 @@ shinyServer(function(input, output) {
 This script generates all of the output and handles the inputs for our shiny app. The architecture is as follows: data is gathered once from Oracle when the app is loaded and all user input only changes the local copy of the data frame. In other words, the data is stored in the local R session, which allows for a more fluid and responsive application for the user. 
 
 #####PV2 Crosstab
-This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV2 Plot" after changing the two PV2 KPI slider inputs.
+This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. The lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV2 Plot" after changing the two PV2 KPI slider inputs.
 
 #####PV4 Crosstab
-This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV4 Plot" after changing the two PV4 KPI slider inputs.
+This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. The lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV4 Plot" after changing the two PV4 KPI slider inputs.
 
 #####Bar Chart
 This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate Bar Chart" after clicking on the various transmissions that the user wants to look at. 
 
 #####Scatterplot
-This plot looks at how the combined MPG of all cars in different year ranges since 1985 to 2016. This plot was created to see if a trend was present. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV4 Plot" after changing the begining year and end year slider inputs that the user wants to look at.
+This plot looks at the combined MPG of all cars in different year ranges since 1985 to 2016. This plot was created to see if a trend was present. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV4 Plot" after changing the begining year and end year slider inputs that the user wants to look at.
 
 ###Ui script
 ```
@@ -343,16 +343,16 @@ dashboardPage(
 ))
 ```
 ####Description of UI script
-This script handles all of the rendering and the user interface for the application. The architecture is a dashboard with 4 tabs. The first tab contains a crosstab that looks at 2 door passenger cars and with two slider inputs for the user to determine what threshold he/she may want to set for the KPI's. The second tab contains another crosstab simliar to the first tab but looks at 4 door passenger cars. The third tab has a Bar Chart with 14 checkboxes that correspond to the 14 different types of transmissions.  The final tab is a scatterplot that looks at the combined MPG for all vehicles in a given model year and has two inputs: one allows the user to select the beginning model year for visualizing and the other selects the end year.
+This script handles all of the rendering and the user interface for the application. The architecture is a dashboard with 5 tabs. The first tab contains a crosstab that looks at 2 door passenger cars and with two slider inputs for the user to determine what threshold he/she may want to set for the KPI's. The second tab contains another crosstab simliar to the first tab but looks at 4 door passenger cars. The third tab has a Bar Chart with 14 checkboxes that correspond to the 14 different types of transmissions.  The fourth tab is a scatterplot that looks at the combined MPG for all vehicles in a given model year and has two inputs: one allows the user to select the beginning model year for visualizing and the other selects the end year. The last tab has two buttons: one button called "Refresh All Plots" will, when clicked, refresh all 4 plots based on user inputs without getting data from Oracle. The other button called "Refresh the Data" gets the data from Oracle.
 
 #####PV2 Crosstab
 This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input. 
 
 #####PV4 Crosstab
-This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input.
+This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the second tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input.
 
 #####Bar Chart
 This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The UI script is wrapped in a tabItem function as the third tab and includes a grouped checkbox input of 14 checkboxes, each with a unique type of transmission for the user to select.
 
 #####Scatterplot
-This plot looks at how the combined MPG of all cars since 1985 has evolved over the years. This plot was created to see if a trend was present. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining starting year that the user wants to start, one input slider for determining end year that the user wants to stop, and one action button that, when clicked, regenerates the plot with the users input.
+This plot looks at how the combined MPG of all cars since 1985 has evolved over the years. This plot was created to see if a trend was present. The UI script is wrapped in a tabItem function as the last tab and includes one input slider for determining starting year that the user wants to start, one input slider for determining end year that the user wants to stop, and one action button that, when clicked, regenerates the plot with the users input.
