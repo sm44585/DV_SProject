@@ -60,8 +60,178 @@ The Shiny app is constructed from a server r script and a ui r script. The UI is
 
 ###Server script
 ```
+require(jsonlite)
+require(RCurl)
+require(ggplot2)
+require(dplyr)
+require(reshape2)
+require(shiny)
 
-
+shinyServer(function(input, output) {
+  #Code to generate data frame
+  vehicles <- eventReactive(c(input$refreshData), {
+    vehicles <- data.frame(fromJSON(getURL(URLencode('skipper.cs.utexas.edu:5001/rest/native/?query="select ATVTYPE,BARRELS08,BARRELSA08,CITY08,CITYA08,CO2TAILPIPEAGPM,CO2TAILPIPEGPM,COMB08,COMBA08,CYLINDERS,FUELCOST08,FUELCOSTA08,FUELTYPE,FUELTYPE1,FUELTYPE2,HIGHWAY08,HIGHWAYA08,HLV,HPV,LV2,LV4,MPGDATA,PV2,PV4,YEAR,MAKE,TRANY from VEHICLES"'),httpheader=c(DB='jdbc:oracle:thin:@sayonara.microlab.cs.utexas.edu:1521:orcl', USER='C##cs329e_sm44585', PASS='orcl_sm44585', MODE='native_mode', MODEL='model', returnDimensions = 'False', returnFor = 'JSON'), verbose = TRUE)))
+  }, ignoreNULL = FALSE)
+  
+  #Code that generates reactive transmission filter for the bar chart.
+  trans_filter <- eventReactive(c(input$refreshAll, input$BarPlot), {
+    if (input$TRANY == "All"){
+      trans_filter = c("Automatic 3-spd", "Automatic 4-spd","Automatic 5-spd","Automatic 6-spd","Automatic 6spd","Automatic 7-spd", "Automatic 8-spd", "Automatic 9-spd", "Manual 3-spd", "Manual 4-spd", "Manual 5-spd", "Manual 5 spd", "Manual 6-spd", "Manual 7-spd")
+    }
+    else {
+      trans_filter = input$TRANY
+    }
+    }, ignoreNULL = FALSE)
+  
+  #Code that generate reactive year selector for the scatter plot.
+  year_range <- eventReactive(c(input$refreshAll, input$ScatterPlot), {
+    if (input$BEG_YEAR <= input$END_YEAR){
+      year_range = input$BEG_YEAR:input$END_YEAR
+    }
+    else {
+      year_range = 1985:2016
+    }
+  }, ignoreNULL = FALSE)
+  
+  #Code that generates reactive KPI inputs for the PV2 crosstab
+  MPG_PV2_KPI_LOW <- eventReactive(c(input$refreshAll, input$PV2Plot), {MPG_PV2_KPI_LOW_2 = input$PV2_KPILow}, ignoreNULL = FALSE)   
+  MPG_PV2_KPI_HIGH <- eventReactive(c(input$refreshAll, input$PV2Plot), {MPG_PV2_KPI_HIGH_2 = input$PV2_KPIHigh}, ignoreNULL = FALSE)
+  
+  #Code that generates reactive KPI inputs for the PV4 crosstab
+  MPG_PV4_KPI_LOW <- eventReactive(c(input$refreshAll,  input$PV4Plot), {MPG_PV2_KPI_LOW = input$PV4_KPILow }, ignoreNULL = FALSE)   
+  MPG_PV4_KPI_HIGH <- eventReactive(c(input$refreshAll, input$PV4Plot), {MPG_PV2_KPI_HIGH = input$PV4_KPIHigh }, ignoreNULL = FALSE)
+  
+  #Code to generate PV2 Crosstab plot
+  output$crosstabPV2Plot <- renderPlot({
+    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2),sum_pv4 = sum(PV4)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV2_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV2_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf, ratio_2 != Inf)
+    
+    # This line turns the make and year columns into ordered factors.
+    crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
+    
+    #This generates the PV4 with combined MPG plot
+    plot <-ggplot() +
+      coord_cartesian() + 
+      scale_x_discrete() +
+      scale_y_discrete() +
+      labs(title='Vehicle Crosstab of Efficiency/Space ratio for 2 door cars') +
+      labs(x=paste("Make"), y=paste("Year")) +
+      layer(data=crosstab, 
+            mapping=aes(x=MAKE, y=YEAR, label=round(ratio_1, 2)), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="text",
+            geom_params=list(colour="black"), 
+            position=position_identity()
+      ) +
+      layer(data=crosstab, 
+            mapping=aes(x=MAKE, y=YEAR, fill=kpi_1), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="tile",
+            geom_params=list(alpha=0.50), 
+            position=position_identity()
+      ) 
+    # End your code here.
+    return(plot)
+  })
+  
+  #Code to generate PV4 Crosstab plot
+  output$crosstabPV4Plot <- renderPlot({
+    crosstab <- vehicles() %>% group_by(MAKE, YEAR) %>% summarize(sum_comb08 = sum(COMB08), sum_pv2 = sum(PV2),sum_pv4 = sum(PV4)) %>% mutate(ratio_1 = sum_comb08 / (sum_pv2))%>% mutate(ratio_2 = sum_comb08 / (sum_pv4)) %>% mutate(kpi_1 = ifelse(ratio_1 < MPG_PV4_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_1 <= MPG_PV4_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious')))%>% mutate(kpi_2 = ifelse(ratio_2 < MPG_PV4_KPI_LOW(), '03 Not Efficient or Spacious', ifelse(ratio_2 <= MPG_PV4_KPI_HIGH(), '02 Average Efficiency and Space', '01 Efficient and Spacious'))) %>%filter(MAKE %in% c("Acura", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Chevrolet", "Dodge", "Ferrari", "Ford", "Honda", "Kia", "Lincoln", "Lexus", "Maserati", "Mazda", "Mercedes-Benz", "Nissan", "Toyota", "Volkswagen")) %>% filter(ratio_1 != Inf, ratio_2 != Inf)
+    
+    # This line turns the make and year columns into ordered factors.
+    crosstab <- crosstab %>% transform(MAKE = ordered(MAKE), YEAR = ordered(YEAR))
+    
+    #This generates the PV4 with combined MPG plot
+    plot <-ggplot() +
+      coord_cartesian() + 
+      scale_x_discrete() +
+      scale_y_discrete() +
+      labs(title='Vehicle Crosstab of Efficiency/Space ratio for 4 door cars') +
+      labs(x=paste("Make"), y=paste("Year")) +
+      layer(data=crosstab, 
+            mapping=aes(x=MAKE, y=YEAR, label=round(ratio_2, 2)), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="text",
+            geom_params=list(colour="black"), 
+            position=position_identity()
+      ) +
+      layer(data=crosstab, 
+            mapping=aes(x=MAKE, y=YEAR, fill=kpi_2), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="tile",
+            geom_params=list(alpha=0.50), 
+            position=position_identity()
+      ) 
+    # End your code here.
+    return(plot)
+  })
+  
+  #Code to generate Bar Chart Plot
+  output$barchartPlot <- renderPlot({
+    bar_chart <- vehicles() %>% select(TRANY, HIGHWAY08, CITY08) %>% subset(TRANY %in% trans_filter()) %>% group_by(TRANY) %>% summarise(avg_city_MPG = mean(CITY08), avg_highway_MPG = mean(HIGHWAY08)) %>% melt(id.vars = c("TRANY")) %>% group_by(variable) %>% mutate(WINDOW_AVG_MPG = mean(value))
+      #Plot Function to generate bar chart with reference line and values
+      plot <- ggplot() + 
+      coord_cartesian() + 
+      scale_x_discrete() +
+      scale_y_continuous() +
+      facet_wrap(~variable) +
+      labs(title='Average Highway and City MPG based on transmission ') +
+      labs(x=paste("Transmission"), y=paste("MPG")) +
+      layer(data=bar_chart, 
+            mapping=aes(x=TRANY, y=value), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="bar",
+            geom_params=list(colour="blue", fill="white"), 
+            position=position_dodge()
+      ) + coord_flip() + 
+      layer(data=bar_chart, 
+            mapping=aes(x=TRANY, y=value, label=round(WINDOW_AVG_MPG, 2)), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="text",
+            geom_params=list(colour="black", hjust=2), 
+            position=position_identity()
+      ) +
+      layer(data=bar_chart, 
+            mapping=aes(yintercept = WINDOW_AVG_MPG), 
+            geom="hline",
+            geom_params=list(colour="red")
+      ) +
+      layer(data=bar_chart, 
+            mapping=aes(x=TRANY, y=value, label=round(value, 2)), 
+            stat="identity", 
+            stat_params=list(), 
+            geom="text",
+            geom_params=list(colour="black", hjust=0), 
+            position=position_identity()
+      )
+    return(plot)
+  })
+  
+  #Code to generate the scatter plot
+  output$ScatterPlot <- renderPlot({
+    scatterplot <- vehicles() %>% select(COMB08, YEAR) %>% subset(YEAR %in% year_range()) %>% transform(YEAR = as.Date(as.character(YEAR), "%Y"))
+    plot <- ggplot() +
+      coord_cartesian() + 
+      scale_x_date() +
+      scale_y_continuous() +
+      labs(title="Combined MPG of every model year") +
+      labs(x="Year", y="Combined MPG") +
+      layer(data=scatterplot , 
+            mapping=aes(x=YEAR, y=COMB08),
+            stat="identity",
+            stat_params=list(), 
+            geom="point",
+            geom_params=list(), 
+            position=position_identity()
+      )
+    return(plot)
+  })
+})
 ```
 ####Description of Server script
 This script generates all of the output and handles the inputs for our shiny app. The architecture is as follows: data is gathered once from Oracle when the app is loaded and all user input only changes the local copy of the data frame. In other words, the data is stored in the local R session, which allows for a more fluid and responsive application for the user. 
@@ -70,17 +240,107 @@ This script generates all of the output and handles the inputs for our shiny app
 This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV2 Plot" after changing the two PV2 KPI slider inputs.
 
 #####PV4 Crosstab
-dummy text
+This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV4 Plot" after changing the two PV4 KPI slider inputs.
 
 #####Bar Chart
 This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate Bar Chart" after clicking on the various transmissions that the user wants to look at. 
 
 #####Scatterplot
-dummy text
+This plot looks at how the combined MPG of all cars in different year ranges since 1985 to 2016. This plot was created to see if a trend was present. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the "Generate PV4 Plot" after changing the begining year and end year slider inputs that the user wants to look at.
 
 ###Ui script
 ```
+require(shiny)
+require(shinydashboard)
+require(leaflet)
 
+# Define UI for application that plots random distributions 
+dashboardPage(
+  dashboardHeader(title = "Project 6: EPA MPG Data Visualization", titleWidth = 400
+  ),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Crosstab PV2", tabName = "PV2_Crosstab", icon = icon("th")),
+      menuItem("Crosstab PV4", tabName = "PV4_Crosstab", icon = icon("th")),
+      menuItem("Bar Chart", tabName = "Bar_Chart", icon = icon("bar-chart")),
+      menuItem("Scatterplot", tabName = "Scatterplot", icon = icon("th")),
+      menuItem("Refresh All Plots and Data", tabName = "Refresh", icon = icon("database"))
+    )
+  ),
+  dashboardBody(
+    tabItems(
+      # First tab content
+      tabItem(tabName = "PV2_Crosstab",
+              sliderInput("PV2_KPILow", 
+                          "Maximum Low Value for PV2 KPI:", 
+                          min = 0,
+                          max = 1, 
+                          value = 1),
+              #Slider for PV2 KPI2
+              sliderInput("PV2_KPIHigh", 
+                          "Maximum Medium Value for PV2 KPI:", 
+                          min = 1, 
+                          max = 2, 
+                          value = 2),
+              actionButton("PV2Plot", "Generate PV2 Crosstab Plot"),
+              plotOutput("crosstabPV2Plot")
+      ),
+    tabItem(tabName = "PV4_Crosstab",
+            sliderInput("PV4_KPILow", 
+                        "Maximum Low Value for PV4 KPI:", 
+                        min = 0,
+                        max = 1, 
+                        value = 1),
+            #Slider for PV4 KPI2
+            sliderInput("PV4_KPIHigh", 
+                        "Maximum Medium Value for PV2 KPI:", 
+                        min = 1,
+                        max = 2, 
+                        value = 2),
+            actionButton("PV4Plot", "Generate PV4 Crosstab Plot"),
+            plotOutput("crosstabPV4Plot")
+            ),
+    tabItem(tabName = "Bar_Chart",
+            checkboxGroupInput(inputId = "TRANY",
+                                label ="Transmission:",
+                                choices = c("All", "Automatic 3-spd", "Automatic 4-spd","Automatic 5-spd","Automatic 6-spd","Automatic 6spd","Automatic 7-spd", "Automatic 8-spd", "Automatic 9-spd", "Manual 3-spd", "Manual 4-spd", "Manual 5-spd", "Manual 5 spd", "Manual 6-spd", "Manual 7-spd"), selected = "All", inline = TRUE
+            ),
+            #action button to generate bar chart plot
+            actionButton("BarPlot", "Generate Bar Plot"),
+            plotOutput("barchartPlot")
+            ),
+    tabItem(tabName = "Scatterplot",
+            p("Note: if beginning year is greater than end year, the chart defaults to displaying all model years."),
+            #data range slider for each year
+            sliderInput("BEG_YEAR", 
+                        "Pick a beginning year of model year:", 
+                        min = 1985,
+                        max = 2016, 
+                        value = 1985,
+                        step = 1,
+                        sep = ""),
+            sliderInput("END_YEAR", 
+                        "Pick an end year of model year:", 
+                        min = 1985,
+                        max = 2016, 
+                        value = 2016,
+                        step = 1,
+                        sep = ""),
+            
+            actionButton("ScatterPlot", "Generate Scatter Plot"),
+            plotOutput("ScatterPlot")
+            ),
+    tabItem(tabName = "Refresh",
+            #action button to generate plots
+            br(),br(),
+            p("If you want to change inputs for multiple charts but don't want to push each button to update the chart, click the button below to refresh all of the plots at once."),
+            actionButton("refreshAll", "Refresh All Plots"),
+            br(),br(),
+            p("If you want to refresh the data from Oracle, click the button below"),
+            actionButton("refreshData", "Refresh the Data")
+    )
+    )
+))
 ```
 ####Description of UI script
 This script handles all of the rendering and the user interface for the application. The architecture is a dashboard with 4 tabs. The first tab contains a crosstab that looks at 2 door passenger cars and with two slider inputs for the user to determine what threshold he/she may want to set for the KPI's. The second tab contains another crosstab simliar to the first tab but looks at 4 door passenger cars. The third tab has a Bar Chart with 14 checkboxes that correspond to the 14 different types of transmissions.  The final tab is a scatterplot that looks at the combined MPG for all vehicles in a given model year and has two inputs: one allows the user to select the beginning model year for visualizing and the other selects the end year.
@@ -89,10 +349,10 @@ This script handles all of the rendering and the user interface for the applicat
 This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input. 
 
 #####PV4 Crosstab
-dummy text
+This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input.
 
 #####Bar Chart
 This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The UI script is wrapped in a tabItem function as the third tab and includes a grouped checkbox input of 14 checkboxes, each with a unique type of transmission for the user to select.
 
 #####Scatterplot
-dummy text
+This plot looks at how the combined MPG of all cars since 1985 has evolved over the years. This plot was created to see if a trend was present. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining starting year that the user wants to start, one input slider for determining end year that the user wants to stop, and one action button that, when clicked, regenerates the plot with the users input.
