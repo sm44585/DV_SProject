@@ -378,7 +378,7 @@ shinyServer(function(input, output) {
 </div>
 <div id="scatterplot" class="section level5">
 <h5>Scatterplot</h5>
-<p>This plot looks at the combined MPG of all cars in different year ranges since 1985 to 2016. This plot was created to see if a trend was present. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the “Generate PV4 Plot” after changing the begining year and end year slider inputs that the user wants to look at.</p>
+<p>This plot looks at the combined MPG of all cars in different year ranges since 1985 to 2016. This plot was created to see if a trend was present. The server script for this plot is wrapped in an eventReactive function that fires only when the user presses the “Generate Scatter Plot” after changing the begining year and end year slider inputs that the user wants to look at.</p>
 </div>
 </div>
 </div>
@@ -477,18 +477,18 @@ dashboardPage(
 ))</code></pre>
 <div id="description-of-ui-script" class="section level4">
 <h4>Description of UI script</h4>
-<p>This script handles all of the rendering and the user interface for the application. The architecture is a dashboard with 5 tabs. The first tab contains a crosstab that looks at 2 door passenger cars and with two slider inputs for the user to determine what threshold he/she may want to set for the KPI’s. The second tab contains another crosstab simliar to the first tab but looks at 4 door passenger cars. The third tab has a Bar Chart with 14 checkboxes that correspond to the 14 different types of transmissions. The fourth tab is a scatterplot that looks at the combined MPG for all vehicles in a given model year and has two inputs: one allows the user to select the beginning model year for visualizing and the other selects the end year. The last tab has two buttons: one button called “Refresh All Plots” will, when clicked, refresh all 4 plots based on user inputs without getting data from Oracle. The other button called “Refresh the Data” gets the data from Oracle.</p>
+<p>This script handles all of the rendering and the user interface for the application. The architecture is a dashboard with 5 tabs. The first tab contains a crosstab that looks at 2 door passenger cars with two slider inputs for the user to determine what threshold he/she may want to set for the KPI’s. The second tab contains another crosstab simliar to the first tab but looks at 4 door passenger cars. The third tab has a Bar Chart with 14 checkboxes that correspond to the 14 different types of transmissions. The fourth tab is a scatterplot that looks at the combined MPG for all vehicles in a given model year and has two inputs: one allows the user to select the beginning model year for visualizing and the other selects the end year. The last tab has two buttons: one button called “Refresh All Plots” that will, when clicked, refresh all 4 plots based on user inputs without getting data from Oracle. The other button called “Refresh the Data” gets a new copy of the data from Oracle.</p>
 <div id="pv2-crosstab-1" class="section level5">
 <h5>PV2 Crosstab</h5>
-<p>This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input.</p>
+<p>This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. The lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the first tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input.</p>
 </div>
 <div id="pv4-crosstab-1" class="section level5">
 <h5>PV4 Crosstab</h5>
-<p>This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. THe lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the second tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input.</p>
+<p>This plot looks at how efficient and spacious a car manufacturers portfolio of vehicles happens to be. The lower the KPI, the less efficency relative to space a manufacturer offers. A higher KPI indicates that the manufacturer offers vehicles that are not only spacious but also fuel efficient. The UI script is wrapped in a tabItem function as the second tab and includes one input slider for determining the maximum low KPI value, one input slider for determining the maximum medium KPI value, and one action button that, when clicked, regenerates the plot with the users input.</p>
 </div>
 <div id="bar-chart-1" class="section level5">
 <h5>Bar Chart</h5>
-<p>This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The UI script is wrapped in a tabItem function as the third tab and includes a grouped checkbox input of 14 checkboxes, each with a unique type of transmission for the user to select.</p>
+<p>This plot looks at the city and highway MPG for 14 different transmission types. This allows the user to see what transmission gets the best MPG. The UI script is wrapped in a tabItem function as the third tab and includes a groupedCheckbox input of 14 checkboxes, each with a unique type of transmission for the user to select.</p>
 </div>
 <div id="scatterplot-1" class="section level5">
 <h5>Scatterplot</h5>
